@@ -32,7 +32,6 @@ class ContextFreeGrammar:
         pass
 
 
-
 class StackMachine:
     def __init__(self, G):
         self.grammar = G
