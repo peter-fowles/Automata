@@ -47,13 +47,14 @@ class StackMachine:
     def process(self, string):
         stack = self.Stack()
         stack.push(self.grammar.start_symbol)
-        return self.__process(self.Snapshot(string, stack))
+        return self.__process(self.StateList([self.Snapshot(string, stack)]))
 
     def __process(self, start):
         queue = [start]
         seenStates = []
         while queue:
-            curr = queue.pop(0)
+            stateList = queue.pop(0)
+            curr = stateList.curr()
             seenStates.append(curr)
             for op in self.operations: 
                 if (op.read is None or curr.string and op.read == curr.string[0]) and op.pop == curr.stack.top():
@@ -66,9 +67,12 @@ class StackMachine:
                     if op.read is not None:
                         nextString = curr.string[1:]
                     nextState = self.Snapshot(nextString, nextStack)
+                    nextStateList = stateList.copy()
+                    nextStateList.add(nextState)
                     if nextState not in seenStates:
-                        queue.append(nextState)
+                        queue.append(nextStateList)
             if len(curr.string) == 0 and curr.stack.isEmpty():
+                print(stateList)
                 return True
         return False
     
@@ -89,6 +93,34 @@ class StackMachine:
             
         def __repr__(self):
             return f'read {self.read}, pop {self.pop}, push {self.push}'
+        
+    class StateList:
+        def __init__(self, states=[]):
+            self.__states = []
+            for state in states:
+                self.__states.append(state)
+        
+        def copy(self):
+            newStates = type(self)()
+            for state in self.__states:
+                newStates.add(state)
+            return newStates
+        
+        def add(self, state):
+            self.__states.append(state)
+        
+        def curr(self):
+            if not self.__states:
+                return None
+            return self.__states[-1]
+        
+        def __repr__(self) -> str:
+            s = ''
+            for state in self.__states[:-1]:
+                s += str(state)
+                s += ' -> '
+            s += str(self.curr())
+            return s
 
     class Stack:
         def __init__(self):
@@ -130,7 +162,7 @@ class StackMachine:
             return result
 
         def __str__(self):
-            return str(self.__stack) + ', top = ' + str(self.top())
+            return str(self.__stack)
     
     class Snapshot:
         def __init__(self, string, stack):
@@ -149,11 +181,14 @@ class StackMachine:
         
 if __name__ == '__main__':
     G = ContextFreeGrammar(V={'S'}, Sigma={'a', 'b'})
-    G.addProduction('S', 'aSa')
-    G.addProduction('S', 'bSb')
+    G.addProduction('S', 'aSb')
     G.addProduction('S', None)
     M = StackMachine(G)
-    print(M.process('abba'))
+    print('Grammar:')
+    print(G)
+    print('Machine:')
+    print(M)
+    print(M.process('aabb'))
 
             
         
