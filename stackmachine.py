@@ -44,14 +44,19 @@ class StackMachine:
         for a in self.grammar.alphabet:
             self.operations.add(self.Operation(a, a, None))
     
-    def process(self, string):
+    def process(self, string, showFinals=False):
         stack = self.Stack()
         stack.push(self.grammar.start_symbol)
-        return self.__process(self.StateList([self.Snapshot(string, stack)]))
+        results = self.__process(self.StateList([self.Snapshot(string, stack)]))
+        if showFinals:
+            for result in results:
+                print(result)
+        return bool(results)
 
     def __process(self, start):
         queue = [start]
         seenStates = []
+        finalSolutionPaths = []
         while queue:
             stateList = queue.pop(0)
             curr = stateList.curr()
@@ -72,9 +77,8 @@ class StackMachine:
                     if nextState not in seenStates:
                         queue.append(nextStateList)
             if len(curr.string) == 0 and curr.stack.isEmpty():
-                print(stateList)
-                return True
-        return False
+                finalSolutionPaths.append(stateList)
+        return finalSolutionPaths
     
     def __repr__(self) -> str:
         s = ''
@@ -173,7 +177,7 @@ class StackMachine:
             return self.string == other.string and self.stack == other.stack
         
         def __str__(self):
-            return f'{self.string}, {self.stack}'
+            return f'"{self.string}", {self.stack}'
         
         def __repr__(self) -> str:
             return self.__str__()
@@ -188,7 +192,9 @@ if __name__ == '__main__':
     print(G)
     print('Machine:')
     print(M)
-    print(M.process('aabb'))
+    s = 'aabb'
+    result = M.process(s, showFinals=True)
+    print('\"' + s + '\" ' + ('is in L(M)' if result else 'is not in L(M)'))
 
             
         
