@@ -43,6 +43,18 @@ class StackMachine:
                     self.operations.add(self.Operation(None, v, production))
         for a in self.grammar.alphabet:
             self.operations.add(self.Operation(a, a, None))
+
+    def __performOperation(self, op, state):
+        nextStack = state.stack.copy()
+        nextStack.pop()
+        nextString = state.string
+        if op.push is not None:
+            for item in op.push[::-1]:
+                nextStack.push(item)
+        if op.read is not None:
+            nextString = state.string[1:]
+        return self.Snapshot(nextString, nextStack)
+
     
     def process(self, string, showFinals=False):
         stack = self.Stack()
@@ -55,23 +67,15 @@ class StackMachine:
 
     def __process(self, start):
         queue = [start]
-        seenStates = []
+        seenStates = set()
         finalSolutionPaths = []
         while queue:
             stateList = queue.pop(0)
             curr = stateList.curr()
-            seenStates.append(curr)
+            seenStates.add(curr)
             for op in self.operations: 
                 if (op.read is None or curr.string and op.read == curr.string[0]) and op.pop == curr.stack.top():
-                    nextStack = curr.stack.copy()
-                    nextStack.pop()
-                    nextString = curr.string
-                    if op.push is not None:
-                        for item in op.push[::-1]:
-                            nextStack.push(item)
-                    if op.read is not None:
-                        nextString = curr.string[1:]
-                    nextState = self.Snapshot(nextString, nextStack)
+                    nextState = self.__performOperation(op, curr)
                     nextStateList = stateList.copy()
                     nextStateList.add(nextState)
                     if nextState not in seenStates:
@@ -177,22 +181,27 @@ class StackMachine:
             return self.string == other.string and self.stack == other.stack
         
         def __str__(self):
-            return f'"{self.string}", {self.stack}'
+            return f'("{self.string}", {self.stack})'
         
         def __repr__(self) -> str:
             return self.__str__()
-            
+        
+        def __hash__(self) -> int:
+            return str(self).__hash__()
         
 if __name__ == '__main__':
-    G = ContextFreeGrammar(V={'S'}, Sigma={'a', 'b'})
-    G.addProduction('S', 'aSb')
+    G = ContextFreeGrammar(V={'S', 'B'}, Sigma={'a', 'b'})
+    G.addProduction('S', 'aS')
+    G.addProduction('S', 'B')
     G.addProduction('S', None)
+    G.addProduction('B', None)
+    G.addProduction('B', 'bB')
     M = StackMachine(G)
     print('Grammar:')
     print(G)
     print('Machine:')
     print(M)
-    s = 'aabb'
+    s = 'aabbbbbbb'
     result = M.process(s, showFinals=True)
     print('\"' + s + '\" ' + ('is in L(M)' if result else 'is not in L(M)'))
 
