@@ -1,13 +1,13 @@
 
 
 class ContextFreeGrammar:
-    def __init__(self, V=set(), Sigma=set([None]), S='S', P={}):
-        self.variables = V
-        self.alphabet = Sigma
-        self.start_symbol = S
-        self.productions = P
+    def __init__(self, V:set, Sigma:set, S:str, P:dict):
+        self.variables:set = V
+        self.alphabet:set = Sigma
+        self.start_symbol:str = S
+        self.productions:dict = P
 
-    def addProduction(self, v, production):
+    def addProduction(self, v:str, production:str) -> None:
         if v not in self.variables:
             raise ValueError(f'The left hand side must be one of {self.variables}')
         if production is not None:
@@ -28,12 +28,9 @@ class ContextFreeGrammar:
         s += '}'
         return s
 
-    def produces(self, string):
-        pass
-
 
 class StackMachine:
-    def __init__(self, G):
+    def __init__(self, G:ContextFreeGrammar):
         self.grammar = G
         self.operations = set()
         self.start_symbol = self.grammar.start_symbol
@@ -56,7 +53,7 @@ class StackMachine:
         return self.Snapshot(nextString, nextStack)
 
     
-    def process(self, string, showPaths=False):
+    def process(self, string:str, showPaths:bool=False) -> bool:
         stack = self.Stack()
         stack.push(self.start_symbol)
         results = self.__process(self.StateList([self.Snapshot(string, stack)]))
@@ -73,15 +70,16 @@ class StackMachine:
             stateList = queue.pop(0)
             curr = stateList.curr()
             seenStates.add(curr)
+            if len(curr.string) == 0 and curr.stack.isEmpty():
+                finalSolutionPaths.append(stateList)
+                continue
             for op in self.operations: 
-                if (op.read is None or curr.string and op.read == curr.string[0]) and op.pop == curr.stack.top():
+                if (op.read is None or curr.string and op.read == curr.string[0]) and (op.pop == curr.stack.top() or op.pop is None):
                     nextState = self.__performOperation(op, curr)
                     nextStateList = stateList.copy()
                     nextStateList.add(nextState)
                     if nextState not in seenStates:
                         queue.append(nextStateList)
-            if len(curr.string) == 0 and curr.stack.isEmpty():
-                finalSolutionPaths.append(stateList)
         return finalSolutionPaths
     
     def __repr__(self) -> str:
@@ -92,11 +90,8 @@ class StackMachine:
             self.read = read
             self.pop = pop
             self.push = push
-
-        def __str__(self) -> str:
-            return f'read {self.read}, pop {self.pop}, push {self.push}'
             
-        def __repr__(self):
+        def __repr__(self) -> str:
             return f'read {self.read}, pop {self.pop}, push {self.push}'
         
     class StateList:
@@ -126,14 +121,14 @@ class StackMachine:
         def __init__(self):
             self.__stack = []
 
-        def show(self):
+        def show(self) -> list:
             return self.__stack
         
-        def push(self, item):
+        def push(self, item) -> None:
             if item is not None:
                 self.__stack.append(item)
 
-        def pop(self):
+        def pop(self) -> str:
             return self.__stack.pop()
         
         def copy(self):
@@ -142,15 +137,15 @@ class StackMachine:
                 newStack.push(item)
             return newStack
         
-        def top(self):
+        def top(self) -> str:
             if len(self.__stack) == 0:
                 return None
             return self.__stack[-1]
         
-        def isEmpty(self):
+        def isEmpty(self) -> bool:
             return len(self.__stack) == 0
         
-        def clear(self):
+        def clear(self) -> None:
             self.__stack = []
         
         def __eq__(self, other: object) -> bool:
@@ -161,7 +156,7 @@ class StackMachine:
                 result &= self.__stack[i] == other.__stack[i]
             return result
 
-        def __str__(self):
+        def __repr__(self) -> str:
             return str(self.__stack)
     
     class Snapshot:
@@ -172,29 +167,28 @@ class StackMachine:
         def __eq__(self, other: object) -> bool:
             return self.string == other.string and self.stack == other.stack
         
-        def __str__(self):
-            return f'("{self.string}", {self.stack})'
-        
         def __repr__(self) -> str:
-            return self.__str__()
+            return f'("{self.string}", {self.stack})'
         
         def __hash__(self) -> int:
             return str(self).__hash__()
         
 if __name__ == '__main__':
-    G = ContextFreeGrammar(V={'S'}, Sigma={'a', 'b'})
+    G = ContextFreeGrammar(V={'S'}, Sigma={'a', 'b'}, S='S', P={})
     G.addProduction('S', 'aSa')
     G.addProduction('S', 'bSb')
     G.addProduction('S', None)
 
     M = StackMachine(G)
-    print('Grammar:')
-    print(G)
-    print('Machine:')
-    print(M)
 
-    s = 'abba'
+    print('Grammar:')
+    print(str(G) + '\n')
+    print('Machine:')
+    print(str(M) + '\n')
+
+    s = 'baaba'
     result = M.process(s, showPaths=True)
+    print()
     print('\"' + s + '\" ' + ('is in L(M)' if result else 'is not in L(M)'))
 
             
