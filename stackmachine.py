@@ -9,11 +9,11 @@ class ContextFreeGrammar:
 
     def addProduction(self, v, production):
         if v not in self.variables:
-            raise ValueError
+            raise ValueError(f'The left hand side must be one of {self.variables}')
         if production is not None:
             for s in production:
                 if s not in self.variables and s not in self.alphabet:
-                    raise ValueError
+                    raise ValueError(f'The right hand side must contain items from {self.variables} and/or {self.alphabet} and/or None')
         if v not in self.productions:
             self.productions[v] = []
         self.productions[v].append(production)
