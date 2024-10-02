@@ -36,7 +36,7 @@ class StackMachine:
     def __init__(self, G):
         self.grammar = G
         self.operations = set()
-
+        self.start_symbol = self.grammar.start_symbol
         for v in self.grammar.variables:
             if v in self.grammar.productions:
                 for production in self.grammar.productions[v]:
@@ -58,7 +58,7 @@ class StackMachine:
     
     def process(self, string, showPaths=False):
         stack = self.Stack()
-        stack.push(self.grammar.start_symbol)
+        stack.push(self.start_symbol)
         results = self.__process(self.StateList([self.Snapshot(string, stack)]))
         if showPaths:
             for result in results:
@@ -85,10 +85,7 @@ class StackMachine:
         return finalSolutionPaths
     
     def __repr__(self) -> str:
-        s = ''
-        for op in self.operations:
-            s += f'{op}\n'
-        return s
+        return '\n'.join([str(op) for op in self.operations])
 
     class Operation:
         def __init__(self, read, pop, push):
@@ -123,12 +120,7 @@ class StackMachine:
             return self.__states[-1]
         
         def __repr__(self) -> str:
-            s = ''
-            for state in self.__states[:-1]:
-                s += str(state)
-                s += ' -> '
-            s += str(self.curr())
-            return s
+            return ' -> '.join(str(state) for state in self.__states)
 
     class Stack:
         def __init__(self):
