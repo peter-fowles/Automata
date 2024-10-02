@@ -56,11 +56,11 @@ class StackMachine:
         return self.Snapshot(nextString, nextStack)
 
     
-    def process(self, string, showFinals=False):
+    def process(self, string, showPaths=False):
         stack = self.Stack()
         stack.push(self.grammar.start_symbol)
         results = self.__process(self.StateList([self.Snapshot(string, stack)]))
-        if showFinals:
+        if showPaths:
             for result in results:
                 print(result)
         return bool(results)
@@ -202,7 +202,7 @@ if __name__ == '__main__':
     print(M)
 
     s = 'abba'
-    result = M.process(s, showFinals=True)
+    result = M.process(s, showPaths=True)
     print('\"' + s + '\" ' + ('is in L(M)' if result else 'is not in L(M)'))
 
             
