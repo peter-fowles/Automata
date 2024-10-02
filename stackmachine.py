@@ -190,18 +190,18 @@ class StackMachine:
             return str(self).__hash__()
         
 if __name__ == '__main__':
-    G = ContextFreeGrammar(V={'S', 'B'}, Sigma={'a', 'b'})
-    G.addProduction('S', 'aS')
-    G.addProduction('S', 'B')
+    G = ContextFreeGrammar(V={'S'}, Sigma={'a', 'b'})
+    G.addProduction('S', 'aSa')
+    G.addProduction('S', 'bSb')
     G.addProduction('S', None)
-    G.addProduction('B', None)
-    G.addProduction('B', 'bB')
+
     M = StackMachine(G)
     print('Grammar:')
     print(G)
     print('Machine:')
     print(M)
-    s = 'aabbbbbbb'
+
+    s = 'abba'
     result = M.process(s, showFinals=True)
     print('\"' + s + '\" ' + ('is in L(M)' if result else 'is not in L(M)'))
 
