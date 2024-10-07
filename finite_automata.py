@@ -12,15 +12,10 @@ class FA:
             self.transitions[fn] = set()
         self.transitions[fn].add(end)
 
-    def __str__(self) -> str:
+    def __repr__(self) -> str:
         return \
-        f'\
-            Q = {{{','.join(self.states)}}}\n\
-            Sigma = {{{','.join(self.alphabet)}}}\n\
-            delta = {{{"\n\t".join(["d(%s) = %s" % (str(key), str(value)) for (key, value) in self.transitions.items()])}\n\t}}\n\
-            q_0 = {self.start}\n\
-            F = {{{"".join(self.final_states)}}}\
-        '
+        f'Q = {{{','.join([str(item) for item in self.states])}}}\nSigma = {{{','.join(self.alphabet)}}}\ndelta = {{\n\t{"\n\t".join(["d(%s) = %s" % (str(key), str(value)) for (key, value) in self.transitions.items()])}\n\t}}\nq_0 = {str(self.start)}\nF = {{{",".join([str(state) for state in self.final_states])}}}'.replace('\'', '').replace(',)',')')
+    
     def processString(self, string:str) -> bool:
         curr_states = [self.start]
         for char in string:
@@ -41,11 +36,11 @@ class FA:
                 result &= (state, char) in self.transitions and len(self.transitions[(state, char)]) == 1
         return result
 
-    def convertToDFA(self) -> None:
+    def convertToDFA(self):
         new_start = tuple([self.start])
         queue = [new_start]
         new_states = set()
-        self.transitions = dict()
+        new_transitions = dict()
         while queue:
             q_next = queue.pop(0)
             if q_next in new_states:
@@ -59,14 +54,18 @@ class FA:
                 next_transition = list(next_transition)
                 next_transition.sort()
                 next_transition = tuple(next_transition)
-                self.transitions[(q_next, char)] = set([next_transition])
+                new_transitions[(q_next, char)] = set([next_transition])
                 queue.append(next_transition)
-                new_states.append(q_next)
+                new_states.add(q_next)
         new_final_states = set()
         for state in new_states:
             for final in self.final_states:
                 if final in state:
                     new_final_states.add(state)
-        self.start = tuple([item for item in new_start])
-        self.states = set([item for item in new_states])
-        self.final_states = set([item for item in new_final_states])
+        return FA(
+            Q=new_states,
+            Sigma=set([char for char in self.alphabet]),
+            delta=new_transitions,
+            q_0=new_start,
+            F=new_final_states
+        )
